@@ -15,8 +15,8 @@ Note: you can certainly modify the script as you see fit and include username an
 input as a security measure, so that the script’s operation aligns more closely with security   
 requirements. However, since the connection uses the SSH protocol, it is likely that the password  
  of an authenticated user will be cached on the server side, making it unnecessary to enter it every time  
-* ##### List of servers    
-* ##### List of applications    
+ * ##### List of servers    
+ * ##### List of applications    
 
 
 ### Usage  
