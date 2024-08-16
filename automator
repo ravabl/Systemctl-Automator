@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# Enter your username and password here
+user=""
+password=""
+
+declare -A server_map=(
+    [k1]="your.server.1.com"
+    [k2]="your.server.2.com"
+
+)
+
+declare -A services_map=(
+    [m]="service_name1"
+    [p]="service_name2"
+    [all]="service_name1 service_name2"
+
+)
+
+# Input data
+get_user_input() {
+    read -p "Enter the list of servers (separated by spaces or server ranges - use a dash): " servers_input
+    read -p "Enter the command (status, start, stop, restart): " command
+    read -p "Enter applications (separated by spaces): " apps_input
+}
+
+# Process input
+process_input() {
+    IFS=' ' read -r -a servers_array <<< "$1"
+    IFS=' ' read -r -a apps_array <<< "$2"
+}
+
+# Function to extract numbers from server names
+get_number() {
+    echo "${1//[^0-9]/}"
+}
+
+# Execute command on the server
+execute_command() {
+    local server=$1
+    local command=$2
+    local service_name=$3
+    sshpass -p "$password" ssh "$user"@"$server" "bash -l -c 'sudo systemctl $command $service_name'"
+}
+
+# Process server ranges
+process_servers() {
+    for range in "${servers_array[@]}"; do
+        if [[ $range == *-* ]]; then
+            handle_range "$range"
+        else
+            handle_single_server "$range"
+        fi
+    done
+}
+
+# Handle server range
+handle_range() {
+    local start_server=$(echo $1 | awk -F'-' '{print $1}')
+    local end_server=$(echo $1 | awk -F'-' '{print $2}')
+    local start_number=$(get_number "$start_server")
+    local end_number=$(get_number "$end_server")
+    local prefix=$(echo "$start_server" | tr -dc 'a-zA-Z.-')
+
+    for ((i=start_number; i<=end_number; i++)); do
+        local current_server=$prefix$i
+        if [[ ${server_map[$current_server]+x} ]]; then
+            execute_for_apps "${server_map[$current_server]}"
+        else
+            echo "Server $current_server not found."
+        fi
+    done
+}
+
+# Handle a single server
+handle_single_server() {
+    if [[ ${server_map[$1]+x} ]]; then
+        execute_for_apps "${server_map[$1]}"
+    else
+        echo "Server $1 not found."
+    fi
+}
+
+# Execute commands for applications
+execute_for_apps() {
+    local server=$1
+    for app in "${apps_array[@]}"; do
+        local service_name=${services_map[$app]}
+        execute_command "$server" "$command" "$service_name"
+    done
+}
+
+# Main logic
+main() {
+    get_user_input
+    process_input "$servers_input" "$apps_input"
+    process_servers
+}
+
+# Run the script
+main
