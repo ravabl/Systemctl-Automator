@@ -18,6 +18,8 @@ requirements. However, since the connection uses the SSH protocol, it is likely 
  * ##### List of servers    
  * ##### List of applications    
 
+## How to start?
+ ./automator.sh
 
 ### Usage  
 The script executes the sudo systemctl command on the server after entering 3 types   of variables in the console:    
